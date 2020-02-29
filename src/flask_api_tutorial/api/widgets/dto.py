@@ -3,7 +3,9 @@ import re
 from datetime import date, datetime, time, timezone
 
 from dateutil import parser
-from flask_restx.inputs import URL
+from flask_restx import Model
+from flask_restx.fields import Boolean, DateTime, Integer, List, Nested, String, Url
+from flask_restx.inputs import positive, URL
 from flask_restx.reqparse import RequestParser
 
 from flask_api_tutorial.util.datetime_util import make_tzaware, DATE_MONTH_NAME
@@ -65,4 +67,50 @@ create_widget_reqparser.add_argument(
     location="form",
     required=True,
     nullable=False,
+)
+
+update_widget_reqparser = create_widget_reqparser.copy()
+update_widget_reqparser.remove_argument("name")
+
+pagination_reqparser = RequestParser(bundle_errors=True)
+pagination_reqparser.add_argument("page", type=positive, required=False, default=1)
+pagination_reqparser.add_argument(
+    "per_page", type=positive, required=False, choices=[5, 10, 25, 50, 100], default=10
+)
+
+widget_owner_model = Model("Widget Owner", {"email": String, "public_id": String})
+
+widget_model = Model(
+    "Widget",
+    {
+        "name": String,
+        "info_url": String,
+        "created_at": String(attribute="created_at_str"),
+        "created_at_iso8601": DateTime(attribute="created_at"),
+        "created_at_rfc822": DateTime(attribute="created_at", dt_format="rfc822"),
+        "deadline": String(attribute="deadline_str"),
+        "deadline_passed": Boolean,
+        "time_remaining": String(attribute="time_remaining_str"),
+        "owner": Nested(widget_owner_model),
+        "link": Url("api.widget"),
+    },
+)
+
+pagination_links_model = Model(
+    "Nav Links",
+    {"self": String, "prev": String, "next": String, "first": String, "last": String},
+)
+
+pagination_model = Model(
+    "Pagination",
+    {
+        "links": Nested(pagination_links_model, skip_none=True),
+        "has_prev": Boolean,
+        "has_next": Boolean,
+        "page": Integer,
+        "total_pages": Integer(attribute="pages"),
+        "items_per_page": Integer(attribute="per_page"),
+        "total_items": Integer(attribute="total"),
+        "items": List(Nested(widget_model)),
+    },
 )
