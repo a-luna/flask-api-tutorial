@@ -35,7 +35,7 @@ class WidgetList(Resource):
     """Handles HTTP requests to URL: /widgets."""
 
     @widget_ns.doc(security="Bearer")
-    @widget_ns.response(HTTPStatus.OK, "Retrieved widget list.", pagination_model)
+    @widget_ns.response(int(HTTPStatus.OK), "Retrieved widget list.", pagination_model)
     @widget_ns.expect(pagination_reqparser)
     def get(self):
         """Retrieve a list of widgets."""
